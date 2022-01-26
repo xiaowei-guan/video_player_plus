@@ -69,7 +69,12 @@ VideoPlayer::VideoPlayer(FlutterDesktopPluginRegistrarRef registrar_ref,
       LOG_ERROR("Set display failed");
       throw VideoPlayerError("PlusPlayer", "set display failed");
     }
-
+    LOG_DEBUG("[PlusPlayer]call SetDisplayMode");
+    if (!instance.SetDisplayMode(plusplayer_,
+                                 plusplayer::DisplayMode::kDstRoi)) {
+      LOG_ERROR("set display mode failed");
+      throw VideoPlayerError("PlusPlayer", "set display mode failed");
+    }
     LOG_DEBUG("[PlusPlayer]call PrepareAsync");
     if (!instance.PrepareAsync(plusplayer_)) {
       LOG_ERROR("Parepare async failed");
