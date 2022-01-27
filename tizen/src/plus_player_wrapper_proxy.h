@@ -188,7 +188,8 @@ typedef void (*OnPlayerAdaptiveStreamingControl)(
     const plusplayer::MessageParam& msg, void* user_data);
 
 typedef void (*OnPlayerDrmInitData)(int* drmhandle, unsigned int len,
-                                    unsigned char* psshdata, plusplayer::TrackType type,
+                                    unsigned char* psshdata,
+                                    plusplayer::TrackType type,
                                     void* user_data);
 
 class PlusPlayerWrapperProxy {
@@ -314,10 +315,12 @@ class PlusPlayerWrapperProxy {
   void SetDrm(PlusPlayerRef player, const plusplayer::drm::Property& property);
   void DrmLicenseAcquiredDone(PlusPlayerRef player, plusplayer::TrackType type);
 
-void SetDrmInitDataCallback(PlusPlayerRef player, OnPlayerDrmInitData callback,
-                            void* user_data);
+  void SetDrmInitDataCallback(PlusPlayerRef player,
+                              OnPlayerDrmInitData callback, void* user_data);
 
-void UnsetDrmInitDataCallback(PlusPlayerRef player);
+  void UnsetDrmInitDataCallback(PlusPlayerRef player);
+
+  void* Dlsym(const char* name);
 
  private:
   PlusPlayerWrapperProxy();
