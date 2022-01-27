@@ -301,7 +301,7 @@ void VideoPlayer::sendInitialized() {
     int width, height;
     if (!instance.GetVideoSize(plusplayer_, &width, &height)) {
       LOG_ERROR("PlusPlayer -> Get video size failed");
-      event_sink_->Error("PlusPlayer - Get video size failed");
+      event_sink_->Error("PlusPlayer", "Get video size failed");
       return;
     }
     LOG_DEBUG("video widht: %d, video height: %d", width, height);
@@ -309,7 +309,7 @@ void VideoPlayer::sendInitialized() {
     plusplayer::DisplayRotation rotate;
     if (!instance.GetDisplayRotate(plusplayer_, &rotate)) {
       LOG_ERROR("PlusPlayer - GetDisplayRotate operation failed");
-      event_sink_->Error("", "PlusPlayer - GetDisplayRotate operation failed");
+      event_sink_->Error("PlusPlayer", "GetDisplayRotate operation failed");
     } else {
       if (rotate == plusplayer::DisplayRotation::kRotate90 ||
           rotate == plusplayer::DisplayRotation::kRotate270) {
