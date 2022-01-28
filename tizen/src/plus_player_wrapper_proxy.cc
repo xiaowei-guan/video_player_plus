@@ -20,16 +20,36 @@ typedef bool (*PlusplayerSetDisplayRoi)(PlusPlayerRef player,
                                         const plusplayer::Geometry& roi);
 typedef bool (*PlusplayerSetDisplayRotate)(
     PlusPlayerRef player, const plusplayer::DisplayRotation& rotate);
-typedef bool (*PlusplayGetDisplayRotate)(PlusPlayerRef player,
-                                         plusplayer::DisplayRotation* rotate);
-typedef bool (*PlusplaySetDisplayVisible)(PlusPlayerRef player,
-                                          bool is_visible);
-typedef bool (*PlusplaySetAudioMute)(PlusPlayerRef player, bool is_mute);
-typedef plusplayer::State (*PlusplayGetState)(PlusPlayerRef player);
-typedef bool (*PlusplayGetDuration)(PlusPlayerRef player,
-                                    int64_t* duration_in_milliseconds);
-typedef bool (*PlusplayGetPlayingTime)(PlusPlayerRef player,
-                                       uint64_t* time_in_milliseconds);
+typedef bool (*PlusplayerGetDisplayRotate)(PlusPlayerRef player,
+                                           plusplayer::DisplayRotation* rotate);
+typedef bool (*PlusplayerSetDisplayVisible)(PlusPlayerRef player,
+                                            bool is_visible);
+typedef bool (*PlusplayerSetAudioMute)(PlusPlayerRef player, bool is_mute);
+typedef plusplayer::State (*PlusplayerGetState)(PlusPlayerRef player);
+typedef bool (*PlusplayerGetDuration)(PlusPlayerRef player,
+                                      int64_t* duration_in_milliseconds);
+typedef bool (*PlusplayerGetPlayingTime)(PlusPlayerRef player,
+                                         uint64_t* time_in_milliseconds);
+typedef bool (*PlusplayerSetPlaybackRate)(PlusPlayerRef player,
+                                          const double speed);
+typedef bool (*PlusplayerPrepare)(PlusPlayerRef player);
+typedef bool (*PlusplayerPrepareAsync)(PlusPlayerRef player);
+typedef bool (*PlusplayerStart)(PlusPlayerRef player);
+typedef bool (*PlusplayerStop)(PlusPlayerRef player);
+typedef bool (*PlusplayerPause)(PlusPlayerRef player);
+typedef bool (*PlusplayerResume)(PlusPlayerRef player);
+typedef bool (*PlusplayerSeek)(PlusPlayerRef player,
+                               const uint64_t time_millisecond);
+typedef bool (*PlusplayerSetStopPosition)(PlusPlayerRef player,
+                                          const uint64_t time_millisecond);
+typedef bool (*PlusplayerSuspend)(PlusPlayerRef player);
+typedef bool (*PlusplayerRestore)(PlusPlayerRef player,
+                                  plusplayer::State state);
+typedef bool (*PlusplayerGetVideoSize)(PlusPlayerRef player, int* width,
+                                       int* height);
+typedef int (*PlusplayerGetSurfaceId)(PlusPlayerRef player, void* window);
+typedef bool (*PlusplayerClose)(PlusPlayerRef player);
+typedef void (*PlusplayerDestroyPlayer)(PlusPlayerRef player);
 
 PlusPlayerWrapperProxy::PlusPlayerWrapperProxy() {
   plus_player_hander_ = dlopen("libplus_player_wrapper.so", RTLD_LAZY);
@@ -142,7 +162,7 @@ bool PlusPlayerWrapperProxy::SetDisplayRotate(
 
 bool PlusPlayerWrapperProxy::GetDisplayRotate(
     PlusPlayerRef player, plusplayer::DisplayRotation* rotate) {
-  PlusplayGetDisplayRotate method_get_display_rotate;
+  PlusplayerGetDisplayRotate method_get_display_rotate;
   *(void**)(&method_get_display_rotate) = Dlsym("GetDisplayRotate");
   if (method_get_display_rotate) {
     return method_get_display_rotate(player, rotate);
@@ -152,7 +172,7 @@ bool PlusPlayerWrapperProxy::GetDisplayRotate(
 
 bool PlusPlayerWrapperProxy::SetDisplayVisible(PlusPlayerRef player,
                                                bool is_visible) {
-  PlusplaySetDisplayVisible method_set_display_visible;
+  PlusplayerSetDisplayVisible method_set_display_visible;
   *(void**)(&method_set_display_visible) = Dlsym("SetDisplayVisible");
   if (method_set_display_visible) {
     return method_set_display_visible(player, is_visible);
@@ -161,7 +181,7 @@ bool PlusPlayerWrapperProxy::SetDisplayVisible(PlusPlayerRef player,
 }
 
 bool PlusPlayerWrapperProxy::SetAudioMute(PlusPlayerRef player, bool is_mute) {
-  PlusplaySetAudioMute method_set_audio_mute;
+  PlusplayerSetAudioMute method_set_audio_mute;
   *(void**)(&method_set_audio_mute) = Dlsym("SetAudioMute");
   if (method_set_audio_mute) {
     return method_set_audio_mute(player, is_mute);
@@ -170,7 +190,7 @@ bool PlusPlayerWrapperProxy::SetAudioMute(PlusPlayerRef player, bool is_mute) {
 }
 
 plusplayer::State PlusPlayerWrapperProxy::GetState(PlusPlayerRef player) {
-  PlusplayGetState method_get_state;
+  PlusplayerGetState method_get_state;
   *(void**)(&method_get_state) = Dlsym("GetState");
   if (method_get_state) {
     return method_get_state(player);
@@ -180,7 +200,7 @@ plusplayer::State PlusPlayerWrapperProxy::GetState(PlusPlayerRef player) {
 
 bool PlusPlayerWrapperProxy::GetDuration(PlusPlayerRef player,
                                          int64_t* duration_in_milliseconds) {
-  PlusplayGetDuration method_get_duration;
+  PlusplayerGetDuration method_get_duration;
   *(void**)(&method_get_duration) = Dlsym("GetDuration");
   if (method_get_duration) {
     return method_get_duration(player, duration_in_milliseconds);
@@ -190,7 +210,7 @@ bool PlusPlayerWrapperProxy::GetDuration(PlusPlayerRef player,
 
 bool PlusPlayerWrapperProxy::GetPlayingTime(PlusPlayerRef player,
                                             uint64_t* time_in_milliseconds) {
-  PlusplayGetPlayingTime method_get_playing_time;
+  PlusplayerGetPlayingTime method_get_playing_time;
   *(void**)(&method_get_playing_time) = Dlsym("GetPlayingTime");
   if (method_get_playing_time) {
     return method_get_playing_time(player, time_in_milliseconds);
@@ -200,230 +220,139 @@ bool PlusPlayerWrapperProxy::GetPlayingTime(PlusPlayerRef player,
 
 bool PlusPlayerWrapperProxy::SetPlaybackRate(PlusPlayerRef player,
                                              const double speed) {
-  if (!plus_player_hander_) {
-    LOG_ERROR("dlopen failed plus_player_hander_ is null");
-    return false;
+  PlusplayerSetPlaybackRate method_set_playback_rate;
+  *(void**)(&method_set_playback_rate) = Dlsym("SetPlaybackRate");
+  if (method_set_playback_rate) {
+    return method_set_playback_rate(player, speed);
   }
-  bool (*SetPlaybackRate)(PlusPlayerRef player, const double speed);
-  *(void**)(&SetPlaybackRate) = dlsym(plus_player_hander_, "SetPlaybackRate");
-  if (SetPlaybackRate) {
-    return SetPlaybackRate(player, speed);
-  } else {
-    LOG_ERROR("Symbol not found %s: ", dlerror());
-    return false;
-  }
+  return false;
 }
 
 bool PlusPlayerWrapperProxy::Prepare(PlusPlayerRef player) {
-  if (!plus_player_hander_) {
-    LOG_ERROR("dlopen failed plus_player_hander_ is null");
-    return false;
+  PlusplayerPrepare method_prepare;
+  *(void**)(&method_prepare) = Dlsym("Prepare");
+  if (method_prepare) {
+    return method_prepare(player);
   }
-  bool (*Prepare)(PlusPlayerRef player);
-  *(void**)(&Prepare) = dlsym(plus_player_hander_, "Prepare");
-  if (Prepare) {
-    return Prepare(player);
-  } else {
-    LOG_ERROR("Symbol not found %s: ", dlerror());
-    return false;
-  }
+  return false;
 }
 
 bool PlusPlayerWrapperProxy::PrepareAsync(PlusPlayerRef player) {
-  if (!plus_player_hander_) {
-    LOG_ERROR("dlopen failed plus_player_hander_ is null");
-    return false;
+  PlusplayerPrepareAsync method_prepare_async;
+  *(void**)(&method_prepare_async) = Dlsym("PrepareAsync");
+  if (method_prepare_async) {
+    return method_prepare_async(player);
   }
-  bool (*PrepareAsync)(PlusPlayerRef player);
-  *(void**)(&PrepareAsync) = dlsym(plus_player_hander_, "PrepareAsync");
-  if (PrepareAsync) {
-    return PrepareAsync(player);
-  } else {
-    LOG_ERROR("Symbol not found %s: ", dlerror());
-    return false;
-  }
+  return false;
 }
 
 bool PlusPlayerWrapperProxy::Start(PlusPlayerRef player) {
-  if (!plus_player_hander_) {
-    LOG_ERROR("dlopen failed plus_player_hander_ is null");
-    return false;
+  PlusplayerStart method_start;
+  *(void**)(&method_start) = Dlsym("Start");
+  if (method_start) {
+    return method_start(player);
   }
-  bool (*Start)(PlusPlayerRef player);
-  *(void**)(&Start) = dlsym(plus_player_hander_, "Start");
-  if (Start) {
-    return Start(player);
-  } else {
-    LOG_ERROR("Symbol not found %s: ", dlerror());
-    return false;
-  }
+  return false;
 }
 
 bool PlusPlayerWrapperProxy::Stop(PlusPlayerRef player) {
-  if (!plus_player_hander_) {
-    LOG_ERROR("dlopen failed plus_player_hander_ is null");
-    return false;
+  PlusplayerStop method_stop;
+  *(void**)(&method_stop) = Dlsym("Stop");
+  if (method_stop) {
+    return method_stop(player);
   }
-  bool (*Stop)(PlusPlayerRef player);
-  *(void**)(&Stop) = dlsym(plus_player_hander_, "Stop");
-  if (Stop) {
-    return Stop(player);
-  } else {
-    LOG_ERROR("Symbol not found %s: ", dlerror());
-    return false;
-  }
+  return false;
 }
 
 bool PlusPlayerWrapperProxy::Pause(PlusPlayerRef player) {
-  if (!plus_player_hander_) {
-    LOG_ERROR("dlopen failed plus_player_hander_ is null");
-    return false;
+  PlusplayerPause method_pause;
+  *(void**)(&method_pause) = Dlsym("Pause");
+  if (method_pause) {
+    return method_pause(player);
   }
-  bool (*Pause)(PlusPlayerRef player);
-  *(void**)(&Pause) = dlsym(plus_player_hander_, "Pause");
-  if (Pause) {
-    return Pause(player);
-  } else {
-    LOG_ERROR("Symbol not found %s: ", dlerror());
-    return false;
-  }
+  return false;
 }
 
 bool PlusPlayerWrapperProxy::Resume(PlusPlayerRef player) {
-  if (!plus_player_hander_) {
-    LOG_ERROR("dlopen failed plus_player_hander_ is null");
-    return false;
+  PlusplayerResume method_resume;
+  *(void**)(&method_resume) = Dlsym("Resume");
+  if (method_resume) {
+    return method_resume(player);
   }
-  bool (*Resume)(PlusPlayerRef player);
-  *(void**)(&Resume) = dlsym(plus_player_hander_, "Resume");
-  if (Resume) {
-    return Resume(player);
-  } else {
-    LOG_ERROR("Symbol not found %s: ", dlerror());
-    return false;
-  }
+  return false;
 }
 
 bool PlusPlayerWrapperProxy::Seek(PlusPlayerRef player,
                                   const uint64_t time_millisecond) {
-  if (!plus_player_hander_) {
-    LOG_ERROR("dlopen failed plus_player_hander_ is null");
-    return false;
+  PlusplayerSeek method_seek;
+  *(void**)(&method_seek) = Dlsym("Seek");
+  if (method_seek) {
+    return method_seek(player, time_millisecond);
   }
-  bool (*Seek)(PlusPlayerRef player, const uint64_t time_millisecond);
-  *(void**)(&Seek) = dlsym(plus_player_hander_, "Seek");
-  if (Seek) {
-    return Seek(player, time_millisecond);
-  } else {
-    LOG_ERROR("Symbol not found %s: ", dlerror());
-    return false;
-  }
+  return false;
 }
 
 void PlusPlayerWrapperProxy::SetStopPosition(PlusPlayerRef player,
                                              const uint64_t time_millisecond) {
-  if (!plus_player_hander_) {
-    LOG_ERROR("dlopen failed plus_player_hander_ is null");
-    return;
-  }
-  bool (*SetStopPosition)(PlusPlayerRef player,
-                          const uint64_t time_millisecond);
-  *(void**)(&SetStopPosition) = dlsym(plus_player_hander_, "SetStopPosition");
-  if (SetStopPosition) {
-    SetStopPosition(player, time_millisecond);
-  } else {
-    LOG_ERROR("Symbol not found %s: ", dlerror());
+  PlusplayerSetStopPosition method_set_stop_position;
+  *(void**)(&method_set_stop_position) = Dlsym("SetStopPosition");
+  if (method_set_stop_position) {
+    method_set_stop_position(player, time_millisecond);
   }
 }
 
 bool PlusPlayerWrapperProxy::Suspend(PlusPlayerRef player) {
-  if (!plus_player_hander_) {
-    LOG_ERROR("dlopen failed plus_player_hander_ is null");
-    return false;
+  PlusplayerSuspend method_suspend;
+  *(void**)(&method_suspend) = Dlsym("Suspend");
+  if (method_suspend) {
+    return method_suspend(player);
   }
-  bool (*Suspend)(PlusPlayerRef player);
-  *(void**)(&Suspend) = dlsym(plus_player_hander_, "Suspend");
-  if (Suspend) {
-    return Suspend(player);
-  } else {
-    LOG_ERROR("Symbol not found %s: ", dlerror());
-    return false;
-  }
+  return false;
 }
 
 bool PlusPlayerWrapperProxy::Restore(PlusPlayerRef player,
                                      plusplayer::State state) {
-  if (!plus_player_hander_) {
-    LOG_ERROR("dlopen failed plus_player_hander_ is null");
-    return false;
+  PlusplayerRestore method_restore;
+  *(void**)(&method_restore) = Dlsym("Restore");
+  if (method_restore) {
+    return method_restore(player, state);
   }
-  bool (*Restore)(PlusPlayerRef player, plusplayer::State state);
-  *(void**)(&Restore) = dlsym(plus_player_hander_, "Restore");
-  if (Restore) {
-    return Restore(player, state);
-  } else {
-    LOG_ERROR("Symbol not found %s: ", dlerror());
-    return false;
-  }
+  return false;
 }
 
 bool PlusPlayerWrapperProxy::GetVideoSize(PlusPlayerRef player, int* width,
                                           int* height) {
-  if (!plus_player_hander_) {
-    LOG_ERROR("dlopen failed plus_player_hander_ is null");
-    return false;
+  PlusplayerGetVideoSize method_get_video_size;
+  *(void**)(&method_get_video_size) = Dlsym("GetVideoSize");
+  if (method_get_video_size) {
+    return method_get_video_size(player, width, height);
   }
-  bool (*GetVideoSize)(PlusPlayerRef player, int* width, int* height);
-  *(void**)(&GetVideoSize) = dlsym(plus_player_hander_, "GetVideoSize");
-  if (GetVideoSize) {
-    return GetVideoSize(player, width, height);
-  } else {
-    LOG_ERROR("Symbol not found %s: ", dlerror());
-    return false;
-  }
+  return false;
 }
 
 int PlusPlayerWrapperProxy::GetSurfaceId(PlusPlayerRef player, void* window) {
-  if (!plus_player_hander_) {
-    LOG_ERROR("dlopen failed plus_player_hander_ is null");
-    return -1;
+  PlusplayerGetSurfaceId method_get_surface_id;
+  *(void**)(&method_get_surface_id) = Dlsym("GetSurfaceId");
+  if (method_get_surface_id) {
+    return method_get_surface_id(player, window);
   }
-  int (*GetSurfaceId)(PlusPlayerRef player, void* window);
-  *(void**)(&GetSurfaceId) = dlsym(plus_player_hander_, "GetSurfaceId");
-  if (GetSurfaceId) {
-    return GetSurfaceId(player, window);
-  } else {
-    LOG_ERROR("Symbol not found %s: ", dlerror());
-    return -1;
-  }
+  return -1;
 }
 
 bool PlusPlayerWrapperProxy::Close(PlusPlayerRef player) {
-  if (!plus_player_hander_) {
-    LOG_ERROR("dlopen failed plus_player_hander_ is null");
-    return false;
+  PlusplayerClose method_close;
+  *(void**)(&method_close) = Dlsym("Close");
+  if (method_close) {
+    return method_close(player);
   }
-  bool (*Close)(PlusPlayerRef player);
-  *(void**)(&Close) = dlsym(plus_player_hander_, "Close");
-  if (Close) {
-    return Close(player);
-  } else {
-    LOG_ERROR("Symbol not found %s: ", dlerror());
-    return false;
-  }
+  return false;
 }
 
 void PlusPlayerWrapperProxy::DestroyPlayer(PlusPlayerRef player) {
-  if (!plus_player_hander_) {
-    LOG_ERROR("dlopen failed plus_player_hander_ is null");
-    return;
-  }
-  void (*DestroyPlayer)(PlusPlayerRef player);
-  *(void**)(&DestroyPlayer) = dlsym(plus_player_hander_, "DestroyPlayer");
-  if (DestroyPlayer) {
-    DestroyPlayer(player);
-  } else {
-    LOG_ERROR("Symbol not found %s: ", dlerror());
+  PlusplayerDestroyPlayer method_destroy_player;
+  *(void**)(&method_destroy_player) = Dlsym("DestroyPlayer");
+  if (method_destroy_player) {
+    method_destroy_player(player);
   }
 }
 
