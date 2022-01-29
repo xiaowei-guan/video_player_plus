@@ -192,6 +192,19 @@ typedef void (*OnPlayerDrmInitData)(int* drmhandle, unsigned int len,
                                     plusplayer::TrackType type,
                                     void* user_data);
 
+struct PlusplayerListener {
+  OnPlayerPrepared prepared_callback{nullptr};
+  OnPlayerSeekCompleted seek_completed_callback{nullptr};
+  OnPlayerResourceConflicted resource_conflicted_callback{nullptr};
+  OnPlayerBuffering buffering_callback{nullptr};
+  OnPlayerCompleted completed_callback{nullptr};
+  OnPlayerPlaying playing_callback{nullptr};
+  OnPlayerError error_callback{nullptr};
+  OnPlayerErrorMessage error_message_callback{nullptr};
+  OnPlayerAdaptiveStreamingControl adaptive_streaming_control_callback{nullptr};
+  OnPlayerDrmInitData drm_init_data_callback{nullptr};
+};
+
 class PlusPlayerWrapperProxy {
  public:
   static PlusPlayerWrapperProxy& GetInstance() {
@@ -200,7 +213,9 @@ class PlusPlayerWrapperProxy {
   }
 
   ~PlusPlayerWrapperProxy();
+
   PlusPlayerWrapperProxy(const PlusPlayerWrapperProxy&) = delete;
+
   PlusPlayerWrapperProxy& operator=(const PlusPlayerWrapperProxy&) = delete;
 
   PlusPlayerRef CreatePlayer();
@@ -221,6 +236,7 @@ class PlusPlayerWrapperProxy {
 
   bool SetDisplayMode(PlusPlayerRef player,
                       const plusplayer::DisplayMode& mode);
+
   bool SetDisplayRoi(PlusPlayerRef player, const plusplayer::Geometry& roi);
 
   bool SetDisplayRotate(PlusPlayerRef player,
@@ -238,6 +254,7 @@ class PlusPlayerWrapperProxy {
   bool GetDuration(PlusPlayerRef player, int64_t* duration_in_milliseconds);
 
   bool GetPlayingTime(PlusPlayerRef player, uint64_t* time_in_milliseconds);
+
   bool SetPlaybackRate(PlusPlayerRef player, const double speed);
 
   bool Prepare(PlusPlayerRef player);
@@ -263,64 +280,18 @@ class PlusPlayerWrapperProxy {
 
   void DestroyPlayer(PlusPlayerRef player);
 
-  void SetCompletedCallback(PlusPlayerRef player, OnPlayerCompleted callback,
-                            void* user_data);
-
-  void UnsetCompletedCallback(PlusPlayerRef player);
-
-  void SetBufferingCallback(PlusPlayerRef player, OnPlayerBuffering callback,
-                            void* user_data);
-
-  void UnsetBufferingCallback(PlusPlayerRef player);
-
-  void SetPreparedCallback(PlusPlayerRef player, OnPlayerPrepared callback,
-                           void* user_data);
-
-  void UnsetPreparedCallback(PlusPlayerRef player);
-
-  void SetResourceConflictedCallback(PlusPlayerRef player,
-                                     OnPlayerResourceConflicted callback,
-                                     void* user_data);
-
-  void UnsetResourceConflictedCallback(PlusPlayerRef player);
-
-  void SetPlayingCallback(PlusPlayerRef player, OnPlayerPlaying callback,
-                          void* user_data);
-
-  void UnsetPlayingCallback(PlusPlayerRef player);
-
   int GetSurfaceId(PlusPlayerRef player, void* window);
-  void SetErrorCallback(PlusPlayerRef player, OnPlayerError callback,
-                        void* user_data);
-
-  void UnsetErrorCallback(PlusPlayerRef player);
-
-  void SetErrorMessageCallback(PlusPlayerRef player,
-                               OnPlayerErrorMessage callback, void* user_data);
-
-  void UnsetErrorMessageCallback(PlusPlayerRef player);
-
-  void SetSeekCompletedCallback(PlusPlayerRef player,
-                                OnPlayerSeekCompleted callback,
-                                void* user_data);
-
-  void UnsetSeekCompletedCallback(PlusPlayerRef player);
-
-  void SetAdaptiveStreamingControlCallback(
-      PlusPlayerRef player, OnPlayerAdaptiveStreamingControl callback,
-      void* user_data);
-
-  void UnsetAdaptiveStreamingControlCallback(PlusPlayerRef player);
 
   void SetDrm(PlusPlayerRef player, const plusplayer::drm::Property& property);
+
   void DrmLicenseAcquiredDone(PlusPlayerRef player, plusplayer::TrackType type);
 
-  void SetDrmInitDataCallback(PlusPlayerRef player,
-                              OnPlayerDrmInitData callback, void* user_data);
-
-  void UnsetDrmInitDataCallback(PlusPlayerRef player);
-
   void* Dlsym(const char* name);
+
+  void RegisterListener(PlusPlayerRef player, PlusplayerListener* listener,
+                        void* user_data);
+
+  void UnregisterListener(PlusPlayerRef player);
 
  private:
   PlusPlayerWrapperProxy();

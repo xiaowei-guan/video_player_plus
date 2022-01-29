@@ -66,6 +66,7 @@ class VideoPlayer {
   long texture_id_;
   PlusPlayerRef plusplayer_{nullptr};
   SeekCompletedCb on_seek_completed_;
+  PlusplayerListener listener_;
 };
 
 #endif  // VIDEO_PLAYER_H_
