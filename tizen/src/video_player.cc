@@ -21,18 +21,20 @@ VideoPlayer::VideoPlayer(FlutterDesktopPluginRegistrarRef registrar_ref,
                          flutter::PluginRegistrar *plugin_registrar,
                          const std::string &uri, VideoPlayerOptions &options) {
   is_initialized_ = false;
-  PlusPlayerWrapperProxy &instance = PlusPlayerWrapperProxy::GetInstance();
+  PlusplayerWrapperProxy &instance = PlusplayerWrapperProxy::GetInstance();
   plusplayer_ = instance.CreatePlayer();
   if (plusplayer_ != nullptr) {
-    instance.SetBufferingCallback(plusplayer_, onBuffering, this);
-    instance.SetCompletedCallback(plusplayer_, onPlayCompleted, this);
-    instance.SetPreparedCallback(plusplayer_, onPrepared, this);
-    instance.SetSeekCompletedCallback(plusplayer_, onSeekCompleted, this);
-    instance.SetErrorCallback(plusplayer_, onError, this);
-    instance.SetErrorMessageCallback(plusplayer_, onErrorMessage, this);
-    instance.SetAdaptiveStreamingControlCallback(
-        plusplayer_, onPlayerAdaptiveStreamingControl, this);
-    instance.SetDrmInitDataCallback(plusplayer_, onDrmInitData, this);
+    listener_.buffering_callback = onBuffering;
+    listener_.adaptive_streaming_control_callback =
+        onPlayerAdaptiveStreamingControl;
+    listener_.completed_callback = onPlayCompleted;
+    listener_.drm_init_data_callback = onDrmInitData;
+    listener_.error_callback = onError;
+    listener_.error_message_callback = onErrorMessage;
+    listener_.playing_callback = onPlaying;
+    listener_.prepared_callback = onPrepared;
+    listener_.seek_completed_callback = onSeekCompleted;
+    instance.RegisterListener(plusplayer_, &listener_, this);
     LOG_DEBUG("[PlusPlayer]call Open to set uri (%s)", uri.c_str());
     if (!instance.Open(plusplayer_, uri.c_str())) {
       LOG_ERROR("Open uri(%s) failed", uri.c_str());
@@ -101,8 +103,7 @@ void VideoPlayer::setDisplayRoi(int x, int y, int w, int h) {
   roi.w = w;
   roi.h = h;
   bool ret =
-      PlusPlayerWrapperProxy::GetInstance().SetDisplayRoi(plusplayer_, roi);
-
+      PlusplayerWrapperProxy::GetInstance().SetDisplayRoi(plusplayer_, roi);
   if (!ret) {
     LOG_ERROR("Plusplayer SetDisplayRoi failed");
     throw VideoPlayerError("PlusPlayer", "SetDisplayRoi failed");
@@ -122,7 +123,7 @@ void VideoPlayer::play() {
     LOG_ERROR("Plusplayer isn't created");
     throw VideoPlayerError("PlusPlayer", "Not created");
   }
-  PlusPlayerWrapperProxy &instance = PlusPlayerWrapperProxy::GetInstance();
+  PlusplayerWrapperProxy &instance = PlusplayerWrapperProxy::GetInstance();
   if (instance.GetState(plusplayer_) < plusplayer::State::kReady) {
     LOG_ERROR("Invalid state for play operation");
     throw VideoPlayerError("PlusPlayer", "Invalid state for play operation");
@@ -148,7 +149,7 @@ void VideoPlayer::pause() {
     throw VideoPlayerError("PlusPlayer", "Not created");
   }
 
-  PlusPlayerWrapperProxy &instance = PlusPlayerWrapperProxy::GetInstance();
+  PlusplayerWrapperProxy &instance = PlusplayerWrapperProxy::GetInstance();
   if (instance.GetState(plusplayer_) < plusplayer::State::kReady) {
     LOG_ERROR("Invalid state for pause operation");
     throw VideoPlayerError("PlusPlayer", "Invalid state for pause operation");
@@ -176,7 +177,7 @@ void VideoPlayer::setPlaybackSpeed(double speed) {
     LOG_ERROR("Plusplayer isn't created");
     throw VideoPlayerError("PlusPlayer", "Not created");
   }
-  PlusPlayerWrapperProxy &instance = PlusPlayerWrapperProxy::GetInstance();
+  PlusplayerWrapperProxy &instance = PlusplayerWrapperProxy::GetInstance();
   if (!instance.SetPlaybackRate(plusplayer_, speed)) {
     LOG_ERROR("SetPlaybackRate failed");
     throw VideoPlayerError("PlusPlayer", "SetPlaybackRate operation failed");
@@ -191,7 +192,7 @@ void VideoPlayer::seekTo(int position,
     throw VideoPlayerError("PlusPlayer", "Not created");
   }
   on_seek_completed_ = seek_completed_cb;
-  PlusPlayerWrapperProxy &instance = PlusPlayerWrapperProxy::GetInstance();
+  PlusplayerWrapperProxy &instance = PlusplayerWrapperProxy::GetInstance();
   if (!instance.Seek(plusplayer_, (unsigned long long)position)) {
     on_seek_completed_ = nullptr;
     LOG_ERROR("Seek to position %d failed", position);
@@ -206,7 +207,7 @@ int VideoPlayer::getPosition() {
     throw VideoPlayerError("PlusPlayer", "Not created");
   }
 
-  PlusPlayerWrapperProxy &instance = PlusPlayerWrapperProxy::GetInstance();
+  PlusplayerWrapperProxy &instance = PlusplayerWrapperProxy::GetInstance();
   plusplayer::State state = instance.GetState(plusplayer_);
   if (state == plusplayer::State::kPlaying ||
       state == plusplayer::State::kPaused) {
@@ -228,17 +229,8 @@ void VideoPlayer::dispose() {
   event_channel_->SetStreamHandler(nullptr);
 
   if (plusplayer_) {
-    PlusPlayerWrapperProxy &instance = PlusPlayerWrapperProxy::GetInstance();
-    instance.UnsetBufferingCallback(plusplayer_);
-    instance.UnsetCompletedCallback(plusplayer_);
-    instance.UnsetPreparedCallback(plusplayer_);
-    instance.UnsetSeekCompletedCallback(plusplayer_);
-    instance.UnsetErrorCallback(plusplayer_);
-    instance.UnsetErrorMessageCallback(plusplayer_);
-    instance.UnsetAdaptiveStreamingControlCallback(plusplayer_);
-    instance.UnsetDrmInitDataCallback(plusplayer_);
-    instance.Stop(plusplayer_);
-    instance.Close(plusplayer_);
+    PlusplayerWrapperProxy &instance = PlusplayerWrapperProxy::GetInstance();
+    instance.UnregisterListener(plusplayer_);
     instance.DestroyPlayer(plusplayer_);
     plusplayer_ = nullptr;
   }
@@ -279,7 +271,7 @@ void VideoPlayer::setupEventChannel(flutter::BinaryMessenger *messenger) {
 }
 
 void VideoPlayer::initialize() {
-  PlusPlayerWrapperProxy &instance = PlusPlayerWrapperProxy::GetInstance();
+  PlusplayerWrapperProxy &instance = PlusplayerWrapperProxy::GetInstance();
   plusplayer::State state = instance.GetState(plusplayer_);
   LOG_INFO("[VideoPlayer.initialize] player state: %d", state);
   if (state == plusplayer::State::kReady && !is_initialized_) {
@@ -289,7 +281,7 @@ void VideoPlayer::initialize() {
 
 void VideoPlayer::sendInitialized() {
   if (!is_initialized_ && event_sink_ != nullptr) {
-    PlusPlayerWrapperProxy &instance = PlusPlayerWrapperProxy::GetInstance();
+    PlusplayerWrapperProxy &instance = PlusplayerWrapperProxy::GetInstance();
     int64_t duration;
     if (!instance.GetDuration(plusplayer_, &duration)) {
       LOG_ERROR("PlusPlayer - GetDuration operation failed");
