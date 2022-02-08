@@ -5,7 +5,6 @@
 #include <flutter/event_channel.h>
 #include <flutter/plugin_registrar.h>
 #include <flutter_tizen.h>
-#include <player.h>
 
 #include <mutex>
 #include <string>
@@ -64,7 +63,7 @@ class VideoPlayer {
       event_channel_;
   std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> event_sink_;
   long texture_id_;
-  PlusPlayerRef plusplayer_{nullptr};
+  PlusplayerRef plusplayer_{nullptr};
   SeekCompletedCb on_seek_completed_;
   PlusplayerListener listener_;
 };

@@ -170,8 +170,8 @@ struct Property {
 
 }  // namespace plusplayer
 
-struct PlusPlayer;
-typedef struct PlusPlayer* PlusPlayerRef;
+struct Plusplayer;
+typedef struct Plusplayer* PlusplayerRef;
 
 typedef void (*OnPlayerPrepared)(bool ret, void* user_data);
 typedef void (*OnPlayerSeekCompleted)(void* user_data);
@@ -205,96 +205,96 @@ struct PlusplayerListener {
   OnPlayerDrmInitData drm_init_data_callback{nullptr};
 };
 
-class PlusPlayerWrapperProxy {
+class PlusplayerWrapperProxy {
  public:
-  static PlusPlayerWrapperProxy& GetInstance() {
-    static PlusPlayerWrapperProxy instance;
+  static PlusplayerWrapperProxy& GetInstance() {
+    static PlusplayerWrapperProxy instance;
     return instance;
   }
 
-  ~PlusPlayerWrapperProxy();
+  ~PlusplayerWrapperProxy();
 
-  PlusPlayerWrapperProxy(const PlusPlayerWrapperProxy&) = delete;
+  PlusplayerWrapperProxy(const PlusplayerWrapperProxy&) = delete;
 
-  PlusPlayerWrapperProxy& operator=(const PlusPlayerWrapperProxy&) = delete;
+  PlusplayerWrapperProxy& operator=(const PlusplayerWrapperProxy&) = delete;
 
-  PlusPlayerRef CreatePlayer();
+  PlusplayerRef CreatePlayer();
 
-  bool Open(PlusPlayerRef player, const char* uri);
+  bool Open(PlusplayerRef player, const char* uri);
 
-  bool Close(PlusPlayerRef player);
+  bool Close(PlusplayerRef player);
 
-  void SetAppId(PlusPlayerRef player, const char* app_id);
+  void SetAppId(PlusplayerRef player, const char* app_id);
 
-  void SetPrebufferMode(PlusPlayerRef player, bool is_prebuffer_mode);
+  void SetPrebufferMode(PlusplayerRef player, bool is_prebuffer_mode);
 
-  bool StopSource(PlusPlayerRef player);
+  bool StopSource(PlusplayerRef player);
 
-  bool SetDisplay(PlusPlayerRef player, const plusplayer::DisplayType& type,
+  bool SetDisplay(PlusplayerRef player, const plusplayer::DisplayType& type,
                   const uint32_t serface_id, const int x, const int y,
                   const int w, const int h);
 
-  bool SetDisplayMode(PlusPlayerRef player,
+  bool SetDisplayMode(PlusplayerRef player,
                       const plusplayer::DisplayMode& mode);
 
-  bool SetDisplayRoi(PlusPlayerRef player, const plusplayer::Geometry& roi);
+  bool SetDisplayRoi(PlusplayerRef player, const plusplayer::Geometry& roi);
 
-  bool SetDisplayRotate(PlusPlayerRef player,
+  bool SetDisplayRotate(PlusplayerRef player,
                         const plusplayer::DisplayRotation& rotate);
 
-  bool GetDisplayRotate(PlusPlayerRef player,
+  bool GetDisplayRotate(PlusplayerRef player,
                         plusplayer::DisplayRotation* rotate);
 
-  bool SetDisplayVisible(PlusPlayerRef player, bool is_visible);
+  bool SetDisplayVisible(PlusplayerRef player, bool is_visible);
 
-  bool SetAudioMute(PlusPlayerRef player, bool is_mute);
+  bool SetAudioMute(PlusplayerRef player, bool is_mute);
 
-  plusplayer::State GetState(PlusPlayerRef player);
+  plusplayer::State GetState(PlusplayerRef player);
 
-  bool GetDuration(PlusPlayerRef player, int64_t* duration_in_milliseconds);
+  bool GetDuration(PlusplayerRef player, int64_t* duration_in_milliseconds);
 
-  bool GetPlayingTime(PlusPlayerRef player, uint64_t* time_in_milliseconds);
+  bool GetPlayingTime(PlusplayerRef player, uint64_t* time_in_milliseconds);
 
-  bool SetPlaybackRate(PlusPlayerRef player, const double speed);
+  bool SetPlaybackRate(PlusplayerRef player, const double speed);
 
-  bool Prepare(PlusPlayerRef player);
+  bool Prepare(PlusplayerRef player);
 
-  bool PrepareAsync(PlusPlayerRef player);
-  bool Start(PlusPlayerRef player);
+  bool PrepareAsync(PlusplayerRef player);
+  bool Start(PlusplayerRef player);
 
-  bool Stop(PlusPlayerRef player);
+  bool Stop(PlusplayerRef player);
 
-  bool Pause(PlusPlayerRef player);
+  bool Pause(PlusplayerRef player);
 
-  bool Resume(PlusPlayerRef player);
+  bool Resume(PlusplayerRef player);
 
-  bool Seek(PlusPlayerRef player, const uint64_t time_millisecond);
+  bool Seek(PlusplayerRef player, const uint64_t time_millisecond);
 
-  void SetStopPosition(PlusPlayerRef player, const uint64_t time_millisecond);
+  void SetStopPosition(PlusplayerRef player, const uint64_t time_millisecond);
 
-  bool Suspend(PlusPlayerRef player);
+  bool Suspend(PlusplayerRef player);
 
-  bool Restore(PlusPlayerRef player, plusplayer::State state);
+  bool Restore(PlusplayerRef player, plusplayer::State state);
 
-  bool GetVideoSize(PlusPlayerRef player, int* width, int* height);
+  bool GetVideoSize(PlusplayerRef player, int* width, int* height);
 
-  void DestroyPlayer(PlusPlayerRef player);
+  void DestroyPlayer(PlusplayerRef player);
 
-  int GetSurfaceId(PlusPlayerRef player, void* window);
+  int GetSurfaceId(PlusplayerRef player, void* window);
 
-  void SetDrm(PlusPlayerRef player, const plusplayer::drm::Property& property);
+  void SetDrm(PlusplayerRef player, const plusplayer::drm::Property& property);
 
-  void DrmLicenseAcquiredDone(PlusPlayerRef player, plusplayer::TrackType type);
+  void DrmLicenseAcquiredDone(PlusplayerRef player, plusplayer::TrackType type);
 
   void* Dlsym(const char* name);
 
-  void RegisterListener(PlusPlayerRef player, PlusplayerListener* listener,
+  void RegisterListener(PlusplayerRef player, PlusplayerListener* listener,
                         void* user_data);
 
-  void UnregisterListener(PlusPlayerRef player);
+  void UnregisterListener(PlusplayerRef player);
 
  private:
-  PlusPlayerWrapperProxy();
+  PlusplayerWrapperProxy();
   void* plus_player_hander_{nullptr};
 };
 #endif
