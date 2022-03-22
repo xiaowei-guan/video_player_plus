@@ -1,4 +1,4 @@
-# video_player_hole
+# video_player_plus
 
 ## Required privileges
 
@@ -24,13 +24,13 @@ This package is not an _endorsed_ implementation of `video_player`. Therefore, y
 
 ```yaml
 dependencies:
-  video_player_hole: ^1.1.0
+  video_player_plus: ^1.1.0
 ```
 
-Then you can import `video_player_hole` in your Dart code:
+Then you can import `video_player_plus` in your Dart code:
 
 ```dart
-import 'package:video_player_hole/video_player.dart';
+import 'package:video_player_plus/video_player.dart';
 ```
 
 For how to use the plugin, see https://github.com/flutter/plugins/tree/master/packages/video_player/video_player#usage.

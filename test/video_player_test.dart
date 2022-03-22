@@ -9,8 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:video_player_plus/video_player.dart';
-import 'package:video_player_platform_interface/messages.dart';
-import 'package:video_player_platform_interface/test.dart';
+import 'package:video_player_plus_platform_interface/messages.dart';
 
 class FakeController extends ValueNotifier<VideoPlayerValue>
     implements VideoPlayerController {
@@ -68,6 +67,14 @@ class FakeController extends ValueNotifier<VideoPlayerValue>
 
   @override
   VideoPlayerOptions? get videoPlayerOptions => null;
+
+  @override
+  // TODO: implement drmType
+  DrmType? get drmType => throw UnimplementedError();
+
+  @override
+  // TODO: implement licenseServerUrl
+  String? get licenseServerUrl => throw UnimplementedError();
 }
 
 Future<ClosedCaptionFile> _loadClosedCaption() async =>
@@ -882,6 +889,10 @@ class FakeVideoPlayerPlatform extends TestHostVideoPlayerApi {
   void setMixWithOthers(MixWithOthersMessage arg) {
     calls.add('setMixWithOthers');
   }
+}
+
+class TestHostVideoPlayerApi {
+  static void setup(FakeVideoPlayerPlatform fakeVideoPlayerPlatform) {}
 }
 
 class FakeVideoEventStream {

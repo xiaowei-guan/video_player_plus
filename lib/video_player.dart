@@ -8,20 +8,29 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:video_player_platform_interface/video_player_platform_interface.dart';
+import 'package:meta/meta.dart';
+import 'package:video_player_plus_platform_interface/video_player_platform_interface.dart';
 import 'src/hole.dart';
 
-export 'package:video_player_platform_interface/video_player_platform_interface.dart'
-    show DurationRange, DataSourceType, VideoFormat, VideoPlayerOptions;
+export 'package:video_player_plus_platform_interface/video_player_platform_interface.dart'
+    show DurationRange, DataSourceType, VideoFormat, VideoPlayerOptions, DrmType;
 
 import 'src/closed_caption_file.dart';
 import 'src/method_channel_video_player_plus.dart';
 export 'src/closed_caption_file.dart';
 
-final VideoPlayerPlatform _videoPlayerPlatform = VideoPlayerPlatform.instance
-  // This will clear all open videos on the platform when a full restart is
-  // performed.
-  ..init();
+VideoPlayerPlatform? _lastVideoPlayerPlatform;
+
+VideoPlayerPlatform get _videoPlayerPlatform {
+  VideoPlayerPlatform currentInstance = VideoPlayerPlatform.instance;
+  if (_lastVideoPlayerPlatform != currentInstance) {
+    // This will clear all open videos on the platform when a full restart is
+    // performed.
+    currentInstance.init();
+    _lastVideoPlayerPlatform = currentInstance;
+  }
+  return currentInstance;
+}
 
 /// The duration, current position, buffering state, error state and settings
 /// of a [VideoPlayerController].
@@ -187,6 +196,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   VideoPlayerController.asset(this.dataSource,
       {this.package, this.closedCaptionFile, this.videoPlayerOptions})
       : dataSourceType = DataSourceType.asset,
+        drmType = DrmType.none,
+        licenseServerUrl = '',
         formatHint = null,
         httpHeaders = const {},
         super(VideoPlayerValue(duration: Duration.zero));
@@ -202,6 +213,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
   /// for the request to the [dataSource].
   VideoPlayerController.network(
     this.dataSource, {
+    this.drmType,
+    this.licenseServerUrl,
     this.formatHint,
     this.closedCaptionFile,
     this.videoPlayerOptions,
@@ -218,6 +231,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
       {this.closedCaptionFile, this.videoPlayerOptions})
       : dataSource = 'file://${file.path}',
         dataSourceType = DataSourceType.file,
+        drmType = DrmType.none,
+        licenseServerUrl = '',
         package = null,
         formatHint = null,
         httpHeaders = const {},
@@ -233,6 +248,8 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
             'VideoPlayerController.contentUri is only supported on Android.'),
         dataSource = contentUri.toString(),
         dataSourceType = DataSourceType.contentUri,
+        drmType = DrmType.none,
+        licenseServerUrl = '',
         package = null,
         formatHint = null,
         httpHeaders = const {},
@@ -260,6 +277,12 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
 
   /// Only set for [asset] videos. The package that the asset was loaded from.
   final String? package;
+
+  /// Describe the Drm type of video.
+  final DrmType? drmType;
+
+  /// The license Server Url. It keeps the licence that can decrypt the drm video.
+  final String? licenseServerUrl;
 
   /// Optional field to specify a file containing the closed
   /// captioning.
@@ -302,11 +325,12 @@ class VideoPlayerController extends ValueNotifier<VideoPlayerValue> {
         break;
       case DataSourceType.network:
         dataSourceDescription = DataSource(
-          sourceType: DataSourceType.network,
-          uri: dataSource,
-          formatHint: formatHint,
-          httpHeaders: httpHeaders,
-        );
+            sourceType: DataSourceType.network,
+            uri: dataSource,
+            drmType: drmType,
+            licenseServerUrl: licenseServerUrl,
+            formatHint: formatHint,
+            httpHeaders: httpHeaders);
         break;
       case DataSourceType.file:
         dataSourceDescription = DataSource(
@@ -960,12 +984,12 @@ class _VideoProgressIndicatorState extends State<VideoProgressIndicator> {
         fit: StackFit.passthrough,
         children: <Widget>[
           LinearProgressIndicator(
-            value: maxBuffering / duration,
+            value: duration != 0 ? maxBuffering / duration : 0,
             valueColor: AlwaysStoppedAnimation<Color>(colors.bufferedColor),
             backgroundColor: colors.backgroundColor,
           ),
           LinearProgressIndicator(
-            value: position / duration,
+            value: duration != 0 ? position / duration : 0,
             valueColor: AlwaysStoppedAnimation<Color>(colors.playedColor),
             backgroundColor: Colors.transparent,
           ),

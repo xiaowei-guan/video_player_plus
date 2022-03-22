@@ -51,6 +51,18 @@ void CreateMessage::setFormatHint(const std::string &formatHint) {
   formatHint_ = formatHint;
 }
 
+int CreateMessage::getDrmType() const { return drm_type_; }
+
+void CreateMessage::setDrmType(int nDrmType) { drm_type_ = nDrmType; }
+
+std::string CreateMessage::getLicenseServerUrl() const {
+  return license_server_url_;
+}
+
+void CreateMessage::setLicenseServerUrl(std::string nLicenseServerUrl) {
+  license_server_url_ = nLicenseServerUrl;
+}
+
 flutter::EncodableValue CreateMessage::toMap() {
   LOG_DEBUG("[CreateMessage.toMap] asset: %s", asset_.c_str());
   LOG_DEBUG("[CreateMessage.toMap] uri: %s", uri_.c_str());
@@ -63,7 +75,10 @@ flutter::EncodableValue CreateMessage::toMap() {
       {flutter::EncodableValue("packageName"),
        flutter::EncodableValue(packageName_)},
       {flutter::EncodableValue("formatHint"),
-       flutter::EncodableValue(formatHint_)}};
+       flutter::EncodableValue(formatHint_)},
+      {flutter::EncodableValue("drmType"), flutter::EncodableValue(drm_type_)},
+      {flutter::EncodableValue("licenseServerUrl"),
+       flutter::EncodableValue(license_server_url_)}};
 
   return flutter::EncodableValue(toMapResult);
 }
@@ -100,6 +115,22 @@ CreateMessage CreateMessage::fromMap(const flutter::EncodableValue &value) {
       fromMapResult.setFormatHint(std::get<std::string>(formatHint));
       LOG_DEBUG("[CreateMessage.fromMap] formatHint: %s",
                 fromMapResult.getFormatHint().c_str());
+    }
+
+    flutter::EncodableValue &drmType = emap[flutter::EncodableValue("drmType")];
+    if (std::holds_alternative<int>(drmType)) {
+      fromMapResult.setDrmType(std::get<int>(drmType));
+      LOG_DEBUG("[CreateMessage.fromMap] drmType: %d",
+                fromMapResult.getDrmType());
+    }
+
+    flutter::EncodableValue &licenseServerUrl =
+        emap[flutter::EncodableValue("licenseServerUrl")];
+    if (std::holds_alternative<std::string>(licenseServerUrl)) {
+      fromMapResult.setLicenseServerUrl(
+          std::get<std::string>(licenseServerUrl));
+      LOG_DEBUG("[CreateMessage.fromMap] licenseServerUrl: %s",
+                fromMapResult.getLicenseServerUrl().c_str());
     }
   }
 

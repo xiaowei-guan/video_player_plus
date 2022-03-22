@@ -37,10 +37,16 @@ class CreateMessage {
   void setPackageName(const std::string &packageName);
   std::string getFormatHint() const;
   void setFormatHint(const std::string &formatHint);
+  int getDrmType() const;
+  void setDrmType(int nDrmType);
+  std::string getLicenseServerUrl() const;
+  void setLicenseServerUrl(std::string nLicenseServerUrl);
   flutter::EncodableValue toMap();
   static CreateMessage fromMap(const flutter::EncodableValue &value);
 
  private:
+  int drm_type_;
+  std::string license_server_url_;
   std::string asset_;
   std::string uri_;
   std::string packageName_;
@@ -184,7 +190,6 @@ class VideoPlayerApi {
   virtual void setMixWithOthers(
       const MixWithOthersMessage &mixWithOthersMsg) = 0;
   virtual void setDisplayRoi(const GeometryMessage &geometryMsg) = 0;
-
   static void setup(flutter::BinaryMessenger *binaryMessenger,
                     VideoPlayerApi *api);
   static flutter::EncodableValue wrapError(const VideoPlayerError &error);
