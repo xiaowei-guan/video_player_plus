@@ -7,6 +7,7 @@
 /// An example of using the plugin, controlling lifecycle and playback of the
 /// video.
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player_plus/video_player.dart';
 
@@ -22,7 +23,7 @@ class _App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 1,
       child: Scaffold(
         key: const ValueKey<String>('home_page'),
         appBar: AppBar(
@@ -44,20 +45,25 @@ class _App extends StatelessWidget {
           bottom: const TabBar(
             isScrollable: true,
             tabs: <Widget>[
+              //Tab(
+              ///   icon: Icon(Icons.cloud),
+              //   text: "Remote",
+              // ),
               Tab(
                 icon: Icon(Icons.cloud),
-                text: "Remote",
+                text: "DRM",
               ),
-              Tab(icon: Icon(Icons.insert_drive_file), text: "Asset"),
-              Tab(icon: Icon(Icons.list), text: "List example"),
+              //  Tab(icon: Icon(Icons.insert_drive_file), text: "Asset"),
+              //  Tab(icon: Icon(Icons.list), text: "List example"),
             ],
           ),
         ),
         body: TabBarView(
           children: <Widget>[
-            _BumbleBeeRemoteVideo(),
-            _ButterFlyAssetVideo(),
-            _ButterFlyAssetVideoInList(),
+            //_BumbleBeeRemoteVideo(),
+            _DrmRemoteVideo(),
+            //_ButterFlyAssetVideo(),
+            // _ButterFlyAssetVideoInList(),
           ],
         ),
       ),
@@ -243,6 +249,77 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
         children: <Widget>[
           Container(padding: const EdgeInsets.only(top: 20.0)),
           const Text('With remote mp4'),
+          Container(
+            padding: const EdgeInsets.all(20),
+            child: AspectRatio(
+              aspectRatio: _controller.value.aspectRatio,
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: <Widget>[
+                  VideoPlayer(_controller),
+                  ClosedCaption(text: _controller.value.caption.text),
+                  _ControlsOverlay(controller: _controller),
+                  VideoProgressIndicator(_controller, allowScrubbing: true),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DrmRemoteVideo extends StatefulWidget {
+  @override
+  _DrmRemoteVideoState createState() => _DrmRemoteVideoState();
+}
+
+class _DrmRemoteVideoState extends State<_DrmRemoteVideo> {
+  late VideoPlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.network(
+      //widevine
+      //'https://storage.googleapis.com/wvmedia/cenc/hevc/tears/tears.mpd',
+      //'http://109.123.100.140/drm2/h264.mpd',
+      //'https://storage.googleapis.com/wvmedia/cenc/h264/tears/tears.mpd',
+      //'https://storage.googleapis.com/wvmedia/cenc/h264/30fps/tears/tears.mpd',
+      //playready
+      'https://test.playready.microsoft.com/smoothstreaming/SSWSS720H264PR/SuperSpeedway_720.ism/Manifest',
+      drmType: DrmType.playready,
+      //drmType: DrmType.widevine,
+      //widevine.
+      //licenseServerUrl: 'https://proxy.uat.widevine.com/proxy',
+      //playready
+      licenseServerUrl:
+          'http://test.playready.microsoft.com/service/rightsmanager.asmx',
+      //videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+    );
+
+    _controller.addListener(() {
+      setState(() {});
+    });
+    _controller.setLooping(true);
+    _controller.initialize().then((_) => setState(() {}));
+    _controller.play();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Column(
+        children: <Widget>[
+          Container(padding: const EdgeInsets.only(top: 20.0)),
+          const Text('Play DRM Remote mp4'),
           Container(
             padding: const EdgeInsets.all(20),
             child: AspectRatio(

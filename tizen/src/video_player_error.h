@@ -5,7 +5,7 @@
 
 class VideoPlayerError {
  public:
-  VideoPlayerError(const std::string &code, const std::string &message)
+  VideoPlayerError(const std::string &code, const std::string &message = "")
       : code_(code), message_(message) {}
   ~VideoPlayerError() = default;
 

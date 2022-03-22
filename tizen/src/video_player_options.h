@@ -11,9 +11,18 @@ class VideoPlayerOptions {
 
   void setMixWithOthers(bool mixWithOthers) { mixWithOthers_ = mixWithOthers; }
   bool getMixWithOthers() const { return mixWithOthers_; }
+  void setDrmOptions(const int drm_type,
+                     const std::string &license_server_url) {
+    drmType_ = drm_type;
+    licenseServerUrl_ = license_server_url;
+  }
+  int getDrmType() { return drmType_; }
+  const char *getLicenseServerUrl() { return licenseServerUrl_.c_str(); }
 
  private:
   bool mixWithOthers_;
+  int drmType_;
+  std::string licenseServerUrl_;
 };
 
 #endif  // VIDEO_PLAYER_OPTIONS_H_

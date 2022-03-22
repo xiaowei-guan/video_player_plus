@@ -394,7 +394,7 @@ void PlusplayerWrapperProxy::RegisterListener(PlusplayerRef player,
 
 void PlusplayerWrapperProxy::UnregisterListener(PlusplayerRef player) {
   PlusplayerUnregisterListener method_unregister_listener;
-  *(void**)&method_unregister_listener = Dlsym("RegisterListener");
+  *(void**)&method_unregister_listener = Dlsym("UnregisterListener");
   if (method_unregister_listener) {
     method_unregister_listener(player);
   }

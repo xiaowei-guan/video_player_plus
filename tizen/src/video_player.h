@@ -5,12 +5,24 @@
 #include <flutter/event_channel.h>
 #include <flutter/plugin_registrar.h>
 #include <flutter_tizen.h>
+#include <glib.h>
+
+#include "drm_manager.h"
+//#include <player_product.h>
 
 #include <mutex>
 #include <string>
 
 #include "plus_player_wrapper_proxy.h"
 #include "video_player_options.h"
+
+typedef enum {
+  PLUS_PLAYER_STATE_NONE,    /**< Player is not created */
+  PLUS_PLAYER_STATE_IDLE,    /**< Player is created, but not prepared */
+  PLUS_PLAYER_STATE_READY,   /**< Player is ready to play media */
+  PLUS_PLAYER_STATE_PLAYING, /**< Player is playing media */
+  PLUS_PLAYER_STATE_PAUSED,  /**< Player is paused while playing media */
+} plusplayer_state_e;
 
 using SeekCompletedCb = std::function<void()>;
 
@@ -34,6 +46,22 @@ class VideoPlayer {
   void setDisplayRoi(int x, int y, int w, int h);
 
  private:
+  // DRM Function
+  void m_InitializeDrmSession(const std::string &uri, int nDrmType);
+  void m_ReleaseDrmSession();
+  static void m_CbDrmManagerError(long errCode, char *errMsg, void *userData);
+  static int m_CbChallengeData(void *session_id, int msgType, void *msg,
+                               int msgLen, void *userData);
+  static gboolean m_InstallEMEKey(void *pData);
+
+  unsigned char *m_pbResponse;
+  SetDataParam_t m_licenseparam;
+  DRMSessionHandle_t m_DRMSession;
+  int m_DrmType;
+  unsigned int m_sourceId;
+  std::string m_LicenseUrl;
+  // end DRM
+
   void initialize();
   void setupEventChannel(flutter::BinaryMessenger *messenger);
   void sendInitialized();
@@ -66,6 +94,7 @@ class VideoPlayer {
   PlusplayerRef plusplayer_{nullptr};
   SeekCompletedCb on_seek_completed_;
   PlusplayerListener listener_;
+  void *drm_manager_handle_ = nullptr;
 };
 
 #endif  // VIDEO_PLAYER_H_
